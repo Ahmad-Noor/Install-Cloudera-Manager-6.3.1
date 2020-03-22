@@ -1,0 +1,143 @@
+su
+hostnamectl set-hostname foo-1.sky.com
+vi /etc/sysconfig/network     
+							HOSTNAME=foo-1.sky.com
+#test ==> 
+		uname -a
+
+
+iptables-save > ~/firewall.rules
+systemctl disable firewalld
+systemctl stop firewalld
+
+getenforce
+#> if the output is enforcing
+vi /etc/selinux/config       SELIUNX=permissive
+reboot
+
+setenforce 0
+
+yum -y update 
+yum -y install ntp
+vi /etc/ntp.conf  #check
+					server 0.centos.pool.ntp.org iburst
+					server 1.centos.pool.ntp.org iburst
+					server 2.centos.pool.ntp.org iburst
+
+systemctl start ntpd
+systemctl enable ntpd
+
+
+#> to disable Transparent Hugepages:
+vi /etc/rc.d/rc.local # Add
+				echo never > /sys/kernel/mm/transparent_hugepage/enabled
+				echo never > /sys/kernel/mm/transparent_hugepage/defrag  
+
+chmod +x /etc/rc.d/rc.local
+vi /etc/default/grub #change 
+			GRUB_CMDLINE_LINUX="crashkernel=auto rd.lvm.lv=centos/root rd.lvm.lv=centos/swap rhgb quiet"
+      # to
+			GRUB_CMDLINE_LINUX="crashkernel=auto rd.lvm.lv=centos/root rd.lvm.lv=centos/swap rhgb quiet transparent_hugepage=never"
+
+grub2-mkconfig -o /boot/grub2/grub.cfg
+
+yum -y install httpd
+systemctl start httpd
+
+wget https://archive.cloudera.com/cm6/6.3.1/redhat7/yum/cloudera-manager.repo -p /etc/yum.repos.d/
+rpm --import https://archive.cloudera.com/cm6/6.3.1/redhat7/yum/RPM-GPG-KEY-cloudera
+
+yum -y install cloudera-manager-agent cloudera-manager-daemons cloudera-manager-server cloudera-manager-server-db-2 oracle-j2sdk1.8
+# or
+#> download https://archive.cloudera.com/cm6/6.3.1/redhat7/yum/RPMS/x86_64/  and copy on user folder
+	sudo yum --nogpgcheck localinstall oracle-j2sdk1.8-1.8.0+update181-1.x86_64.rpm
+	sudo yum --nogpgcheck localinstall cloudera-manager-daemons-6.3.1-1466458.el7.x86_64.rpm
+	sudo yum --nogpgcheck localinstall cloudera-manager-agent-6.3.1-1466458.el7.x86_64.rpm
+	sudo yum --nogpgcheck localinstall cloudera-manager-server-6.3.1-1466458.el7.x86_64.rpm
+	sudo yum --nogpgcheck localinstall cloudera-manager-server-db-2-6.3.1-1466458.el7.x86_64.rpm
+
+  
+  
+sudo JAVA_HOME=/usr/java/jdk1.8.0_181-cloudera /opt/cloudera/cm-agent/bin/certmanager setup --configure-services
+sudo JAVA_HOME=/usr/java/jdk1.8.0_181-cloudera /opt/cloudera/cm-agent/bin/certmanager --location /opt/cloudera/CMCA setup --configure-services
+
+vi /etc/profile
+				export JAVA_HOME=/usr/java/jdk1.8.0_181-cloudera
+				export JRE_HOME=$JAVA_HOME
+
+vi /etc/httpd/conf/httpd.conf    <IfModule mime_module>    
+															AddType application/x-gzip .gz .tgz .parcel 
+
+systemctl restart httpd
+
+
+ping foo-1.sky.com # check machine ip
+vi /etc/hosts
+# machine IP     hostname
+172.19.141.39	foo-1.sky.com
+
+yum clean all
+yum makecash
+yum repolist
+
+
+# mySQL 
+wget http://repo.mysql.com/mysql-community-release-el7-7.noarch.rpm
+rpm -ivh mysql-community-release-el7-7.noarch.rpm
+yum -y update 
+yum -y install mysql-server
+systemctl start mysql
+systemctl enable mysqld
+mysql_secure_installation
+
+sudo yum install mysql-workbench
+
+
+mysql -u root -p
+grant all on *.* TO 'temp'@'%' IDENTIFIED BY 'temp123' with grant option;  
+
+CREATE DATABASE amon DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;  
+CREATE DATABASE rman DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;  
+CREATE DATABASE hue DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;  
+CREATE DATABASE metastore DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;  
+CREATE DATABASE sentry DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;  
+CREATE DATABASE nav DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;  
+CREATE DATABASE navms DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;  
+CREATE DATABASE oozie DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci; 
+CREATE DATABASE Hive DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci; 
+
+grant all on *.* TO 'temp'@'%' IDENTIFIED BY 'temp123' with grant option;  
+Show DATABASEs;
+
+wget https://cdn.mysql.com//archives/mysql-connector-java-5.1/mysql-connector-java-5.1.47.tar.gz 
+tar zxvf mysql-connector-java-5.1.47.tar.gz  
+mkdir -p /usr/share/java/
+cd mysql-connector-java-5.1.47  
+sudo cp mysql-connector-java-5.1.47-bin.jar /usr/share/java/mysql-connector-java.jar 
+
+
+
+sudo /opt/cloudera/cm/schema/scm_prepare_database.sh mysql -h foo-1.sky.com -utemp -ptemp123 --scm-host foo-1.sky.com scm scm scm
+
+
+systemctl start cloudera-scm-server  
+systemctl enable cloudera-scm-server  
+systemctl status cloudera-scm-server   
+sudo tail -f /var/log/cloudera-scm-server/cloudera-scm-server.log
+
+ 
+yum -y install telnet
+
+
+telnet foo-1.sky.com 7180
+
+# open url : foo-1.sky.com:7180
+
+
+
+
+
+
+https://www.youtube.com/watch?v=92GDgf1mlvM
+
+
